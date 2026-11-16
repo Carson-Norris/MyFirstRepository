@@ -1,0 +1,96 @@
+---
+title: "STA445_Ch.14_CBN"
+author: "Carson Norris"
+date: "2026-11-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(RColorBrewer)
+```
+
+## Exercise 2
+
+Using the datasets::trees data, complete the following. This question refreshes create a linear model, graphing the linear model, and introduces using some LaTeX expressions on the graph.
+
+```{r}
+data("trees")
+```
+
+a) Create a regression model for y=Volume as a function of x=Height.
+
+```{r}
+model <- lm( Volume ~ Height, data=trees)
+```
+
+b) Display the summary of the model to view the y-intercept and slope of the regression line.
+
+```{r}
+summary(model)
+```
+
+c) Using ggplot2, create a scatter plot of Volume vs Height.
+
+```{r}
+tree.graph <- ggplot(trees) +
+  geom_point( aes(x = Height, y = Volume))
+tree.graph
+```
+
+d) Color the scatter using the Girth variable.
+
+```{r}
+tree.graph <- tree.graph + aes(color = Girth)
+tree.graph
+```
+
+e) Modify the color scheme using a RColorBrewer palette.
+
+```{r}
+tree.graph <- tree.graph + scale_color_continuous(palette='YlOrRd')
+tree.graph
+```
+
+f) Create a nice white filled rectangle to add text information. The following might be useful.
+
+```{r}
+tree.graph <- tree.graph + 
+  annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+         fill='white', color='black') +
+  annotate('text', x=70, y=68, size=3, color='black', label='volume and girth increase with height')
+
+tree.graph
+```
+g) Use the broom package to extract the coefficients of the best-fit line. Add this information as an annotation to the graph. Place the annotation within the white text box.
+
+```{r}
+tree.graph.2 <- tree.graph + 
+  annotate('text', x=70, y=62, size=3, color='black', label=model$coef)
+tree.graph.2
+```
+
+h) Use the broom package to extract the coefficient of determination r2
+from the model. Add the annotation to your graph.
+  
+```{r}
+
+```
+
+i) Add the regression line in red. There are several ways to do this.
+
+```{r}
+
+```
+
+j) Properly label the axes of the graph.
+
+```{r}
+
+```
+
+k) Add a descriptive title to the graph.
+
+```{r}
+
+```

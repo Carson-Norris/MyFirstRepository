@@ -1,0 +1,199 @@
+---
+title: "STA445_Ch.13_CBN"
+author: "Carson Norris"
+date: "2026-10-30"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Exercise 1
+
+A common task is to take a set of data that has multiple categorical variables and create a table of the number of cases for each combination. An introductory statistics textbook contains a data set summarizing student surveys from several sections of an intro class. The two variables of interest are Gender and Year which are the students gender and year in college. Note: you will need to refer to Chapter 4 and Chapter 7 for some of the operations needed below - this is a great time to review chapter 4!
+
+a) Download the data set using the following:
+
+```{r}
+Survey <- read.csv('https://www.lock5stat.com/datasets2e/StudentSurvey.csv', na.strings=c('',' ')) 
+```
+
+b) Select the specific columns of interest Year and Gender
+
+```{r}
+Survey.2 <- select(Survey, Year, Gender)
+head(Survey.2)
+```
+
+c) Convert the Year column to factors and properly order the factors based on common US progression (FirstYear - Sophomore - Junior - Senior)
+
+```{r}
+Survey.2 <- Survey.2 %>% mutate(Year = as.factor(Year)) %>% mutate(Class.Year = fct_relevel(Year, 'FirstYear', 'Sophomore', 'Junior', 'Senior'))
+head(Survey.2)
+```
+
+d) Convert the Gender column to factors and rename them Male/Female.
+
+```{r}
+Survey.2 <- Survey.2 %>% mutate(Gender = ifelse(Gender == 'M', 'Male', 'Female')) 
+
+Survey.2 <- Survey.2 %>% mutate(Gender = as.factor(Gender))
+
+head(Survey.2)
+```
+
+e) Produce a data set with eight rows and three columns that contains the number of responses for each gender:year combination. You might want to look at the following functions: dplyr::count and dplyr::drop_na.
+
+```{r}
+Survey.2 <- Survey.2 %>% drop_na()
+Survey.data <- count(Survey.2, Gender, Class.Year)
+Survey.data
+```
+
+f) Pivot the table in part (e) to produce a table of the number of responses in the following form:
+
+Gender	First Year	Sophomore	Junior	Senior
+Female				
+Male	
+
+```{r}
+Survey.wide <- Survey.data %>% pivot_wider(names_from = Class.Year, values_from = n)
+Survey.wide
+```
+
+Selected the year and gender columns from the Survey data. Changed the class years to factors ad re-leveled them. Changed the gender abbreviations to "Male" and "Female", and changed the genders to factors. Removed any observations with n/a values and used the count() command to determine how many observations from each class year ans gender there are. Pivoted the table so that each class year is a column, and the genders are the rows.
+
+## Exercise 3
+
+For this problem we will consider two simple data sets.
+
+```{r}
+A <- tribble(
+  ~Name, ~Car,
+  'Alice', 'Ford F150',
+  'Bob',   'Tesla Model III',
+  'Charlie', 'VW Bug')
+
+B <- tribble(
+  ~First.Name, ~Pet,
+  'Bob',  'Cat',
+  'Charlie', 'Dog',
+  'Alice', 'Rabbit')
+```
+
+a) Combine the data frames together to generate a data set with three rows and three columns using join commands.
+
+```{r}
+C <- full_join(A, B, by=c('Name'='First.Name'))
+C
+```
+Joined the two tables together based on the "Name" and "First.Name" columns.
+
+b) It turns out that Alice also has a pet guinea pig. Add another row to the B data set. Do this using either the base function rbind, or either of the dplyr functions add_row or bind_rows.
+
+```{r}
+D <- tibble( Pet.2 = c('n/a', 'n/a', 'Guniea Pig'))
+E <- cbind(B, D)
+E
+```
+
+Bound a new row to the original pet table that shows the 2nd pet each person owns.
+
+c) Combine again the A and B data sets together to generate a data set with four rows and three columns using join commands.
+
+```{r}
+F <- full_join(A, E, by=c('Name'='First.Name'))
+F
+```
+Note: You may want to also try using cbind to address questions (a) and (c). Leave this as a challenge question and focus on the easier to use join functions introduced in this chapter.
+
+Joined the new pet table to the car table.
+
+## Exercise 4
+
+Exercise 4
+The package nycflights13 contains information about all the flights that arrived in or left from New York City in 2013. This package contains five data tables, but there are three data tables we will work with. The data table flights gives information about a particular flight, airports gives information about a particular airport, and airlines gives information about each airline. Create a table of all the flights on February 14th by Virgin America that has columns for the carrier, destination, departure time, and flight duration. Join this table with the airports information for the destination. Notice that because the column for the destination airport code doesn’t match up between flights and airports, you’ll have to use the by=c("TableA.Col"="TableB.Col") argument where you insert the correct names for TableA.Col and TableB.Col.
+
+```{r}
+library(nycflights13)
+```
+
+```{r}
+data("flights")
+data("airports")
+data("airlines")
+
+head(flights, 10)
+head(airports, 10)
+airlines
+```
+
+```{r}
+trip.data <- select(flights, year, month, day, carrier, dest, dep_time, air_time )
+trip.data <- filter(trip.data, carrier == 'VX', month == 2, day == 14)
+trip.data
+```
+
+Created a table using the select() command, pulling only the required information. Filter the table for all the flights on February 14th by Virgin America.
+
+```{r}
+flight.data <- full_join(trip.data, airports, by=c('dest'='faa'))
+flight.data
+```
+
+Joined the Virgin America flight table to the airport table by matching up the destination airport column in the VA flight table to the FAA airport code column in the airport table.
+
+## Challenge Problem - Exercise 2
+
+From this book’s GitHub there is a .csv file of the daily maximum temperature in Flagstaff at the Pulliam Airport.
+
+```{r}
+pull.temp <- read.csv('https://raw.githubusercontent.com/BuscagliaR/STA_444_v2/master/data-raw/FlagMaxTemp.csv')
+head(pull.temp, 5)
+```
+
+a) Create a line graph that gives the daily maximum temperature for 2005. Make sure the x-axis is a date and covers the whole year.
+
+```{r}
+pull.temp.05 <- filter(pull.temp, Year == 2005 )
+pull.temp.05 <- pull.temp.05 %>% pivot_longer(
+  X1:X31,
+  names_to = 'Day',
+  values_to = 'Temp')
+pull.temp.05 <- pull.temp.05 %>% drop_na() 
+pull.temp.05 <- pull.temp.05 %>% mutate(Day = str_sub(string = pull.temp.05$Day, start = 2)) 
+pull.temp.05 <- pull.temp.05 %>% mutate(Date = make_date(month = Month, day = Day, year = Year))
+pull.temp.05
+
+ggplot(data = pull.temp.05) +
+  geom_line( aes(x = Date, y = Temp)) +
+  labs(title = 'Maximum Daily Temperature at Pulliam Airport', x = 'Date', y = 'Temperature')
+```
+
+Created a graph of the daily maximum temperature in 2005 recorded at Pulliam Airport.
+
+b) Create a line graph that gives the monthly average maximum temperature for 2013 - 2015. Again the x-axis should be the date and span 3 years.
+
+```{r}
+pull.1315 <- filter(pull.temp, Year >= 2013 & Year <= 2015)
+pull.1315 <- pull.1315 %>% pivot_longer(
+  X1:X31,
+  names_to = 'Day',
+  values_to = 'Temp')
+pull.1315 <- pull.1315 %>% drop_na()
+pull.1315 <- pull.1315 %>% mutate(Day = str_sub(string = pull.1315$Day, start = 2)) 
+pull.1315 <- pull.1315 %>% mutate(Date = make_date(month = Month, day = Day, year = Year))
+
+pull.month <- pull.1315 %>% group_by(Year, Month) %>% 
+  summarise(avg_temp = mean(Temp), .groups = "drop") 
+pull.month <- pull.month %>% mutate(Date.month = make_date(month = Month, year = Year))
+
+ggplot(pull.month) +
+  geom_line( aes(x = Date.month, y = avg_temp)) +
+  geom_point(aes(x = Date.month, y = avg_temp)) +
+  labs(title = 'Average Monthly Temperature at Pulliam Airport', x = 'Date', y = 'Temperature')
+
+```
+
+Created a graph of the monthly average maximum temperature for 2013 - 2015 recorded at Pulliam Airport.

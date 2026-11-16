@@ -1,0 +1,210 @@
+---
+title: "STA445_Ch.8_CBN"
+author: "Carson Norris"
+date: "2026-09-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Exercise 1
+Create a vector of three elements (2,4,6) and name that vector vec_a. Create a second vector, vec_b, that contains (8, 10, 12). Add these two vectors together and name the result vec_c.
+
+```{r}
+vec_a <- c(2, 4, 6)
+vec_b <- c(8, 10, 12)
+vec_c <- c(vec_a + vec_b)
+```
+
+Created vec_a and vec_b and add them together to create a new vector.
+
+## Exercise 2
+Create a vector, named vec_d, that contains only two elements (14,20). Add this vector to vec_a. What is the result and what do you think R did (look up the recycling rule using Google)? What is the warning message that R gives you?
+
+```{r}
+vec_d <- c(14, 20)
+vec_e <- c(vec_d + vec_a)
+vec_e
+```
+
+Created 2 element vec_d and added it to vec_a to create vec_e. 
+
+The first two numbers in both vectors get added together, and the last number in the two element vector gets repeated. The recycling rule is that when vectors of different lengths are added together the last element of the shorter vector is repeated to match the length of the other vector. R gives the warning "Warning in vec_d + vec_a :longer object length is not a multiple of shorter object length". 
+
+## Exercise 3
+Next add 5 to the vector vec_a. What is the result and what did R do? Why doesn’t in give you a warning message similar to what you saw in the previous problem?
+
+```{r}
+vec_f <- vec_a + 5
+vec_f
+```
+
+Added 5 to vec_a to create vec_f.
+
+This adds 5 to each of the elements in the vector. This is just a simple function that adds 5 to each element, where as in the previous exercise we were adding different elements together based on their position in each vector.   
+
+## Exercise 5
+Generate the vector of even numbers {2,4,6,…,20}
+
+a) Using the seq() function and
+
+b) Using the a:b shortcut and some subsequent algebra. Hint: Generate a sequence of integers then multiple by 2.
+
+```{r}
+vec_g <- seq(1:10) * 2
+vec_g
+```
+
+Created vec_g which is a sequence of 10 numbers increasing by 2.
+
+## Exercise 6
+Generate a vector of 21 elements that are evenly placed between 0 and 1 using the seq() command and name this vector x.
+
+```{r}
+x <- seq(0, 1, length.out = 21)
+x
+```
+
+Created object x which is a sequence of 21 numbers between 0 and 1.
+  
+## Exercise 8
+Generate the vector {2,2,2,2,4,4,4,4,8,8,8,8} using the rep() command. You might need to check the help file for rep(). In particular, look at the optional argument each=.
+
+```{r}
+vec_h <- rep( c('2', '4', '8'), 4)
+vec_h
+```
+
+Generated a vector using the rep() command.
+
+## Exercise 11
+Create and manipulate a data frame.
+
+a) Create a data.frame named my.trees that has the following columns:
+
+```{r}
+my.trees <- data.frame(
+  Girth = c(8.3, 8.6, 8.8, 10.5, 10.7, 10.8, 11.0),
+  Height = c(70, 65, 63, 72, 81, 83, 66),
+  Volume = c(10.3, 10.3, 10.2, 16.4, 18.8, 19.7, 15.6)
+)
+my.trees
+```
+
+Complete the following without using dplyr functions
+
+b) Extract the third observation (i.e. the third row)
+
+```{r}
+my.trees[3, ]
+```
+
+c) Extract the Girth column referring to it by name (don’t use a numerical value based on column position).
+
+```{r}
+my.trees$Girth
+```
+
+d) Print out a data frame of all the observations except for the fourth observation. (i.e. Remove the fourth observation/row.)
+
+```{r}
+my.trees[ -4, ]
+```
+
+e) Use the which() command to create a vector of row indices that have a girth greater than 10. Call that vector index.
+
+```{r}
+index <- which(my.trees$Girth > 10)
+index
+```
+
+f) Use the index vector to create a small data set with just the large girth trees.
+
+```{r}
+big.trees <- my.trees[index, ]
+big.trees
+```
+
+g) Use the index vector to create a small data set with just the small girth trees.
+
+```{r}
+small.trees <- my.trees[-index, ]
+small.trees
+```
+
+Extracted data from the trees data set.
+
+## Exercise 12
+The following code creates a data.frame and then has two different methods for removing the rows with NA values in the column Grade. Explain the difference between the two.
+
+df <- data.frame(name= c('Alice','Bob','Charlie','Daniel'),
+                 Grade = c(6,8,NA,9))
+
+df[ -which(  is.na(df$Grade) ), ]
+df[  which( !is.na(df$Grade) ), ]
+
+The first method removes the rows that meet the specified condition, and the second method finds the rows that do not equal the condition.
+
+# Challenge Question - What's Inside an lm Object?
+
+You have already used lm() to fit statistical models, but Chapter 8 shows that the object returned by lm() is actually a list containing many different pieces of information.
+
+Using the built-in trees data set, fit the following model:
+
+```{r}
+data(trees)
+
+model <- lm(Volume ~ Girth + Height, data = trees)
+```
+
+Your goal is to investigate the model and then use its underlying data structures to reproduce part of what R has already calculated.
+
+## Question 1 - Explore the object
+
+Use str() to investigate model.
+
+Identify:
+
+the element containing the estimated coefficients
+the element containing the fitted values
+the element containing the residuals.
+Extract each of these and save them as separate objects.
+
+```{r}
+str(model)
+
+coef <- model$coefficients
+fit <- model$fitted.values
+res <- model$residuals
+```
+
+Extract the estimated coefficients, fitted values, and the residuals and saved them as separate objects.
+
+## Question 2 - Reconstruct the fitted values
+
+Create a matrix containing a column of 1s, followed by the Girth and Height variables from trees.
+
+Use the coefficient vector from your model and matrix multiplication (%*%) to calculate the fitted values yourself.
+
+Compare your calculated fitted values with the fitted values stored in model.
+
+Are they identical (up to numerical rounding)?
+
+```{r}
+m.Girth <- trees$Girth
+m.Height <- trees$Height
+
+tree.matrix <- cbind(1, m.Girth, m.Height)
+
+tree.calc = tree.matrix %*% coef
+
+fit.comp <- data.frame(
+  Calculated = tree.calc,
+  Modeled = fit
+  )
+fit.comp
+```
+
+Extracted the girth and height data, and add them to a new matrix. Used that matrix to manually calculate the fitted values. Compared the calculated fitted values and the model fitted values in a data frame.

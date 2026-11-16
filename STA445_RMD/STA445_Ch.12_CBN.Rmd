@@ -1,0 +1,195 @@
+---
+title: "STA445_Ch.12_CBN"
+author: "Carson Norris"
+date: "2026-10-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+## Exercise 1
+
+Convert the following to date or date/time objects.
+
+a) September 13, 2010.
+
+```{r}
+mdy('September 13, 2010')
+```
+b) Sept 13, 2010.
+
+```{r}
+mdy('Sept 13, 2010') 
+
+#Failed to parse because Sept is not an accepted month abbreviation.
+```
+
+c) Sep 13, 2010.
+
+```{r}
+mdy('Sep 13, 2010')
+```
+
+
+d) S 13, 2010. Comment on the month abbreviation needs.
+
+```{r}
+mdy('S 13, 2010')
+
+# Failed to parse because S in not an accepted month abbreviation.
+```
+
+e) 07-Dec-1941.
+
+```{r}
+dmy('7 Dec, 1941')
+```
+
+f) 1-5-1998. Comment on why you might be wrong.
+
+```{r}
+dmy('1 5, 1998')
+```
+
+This could either be the 5th of January, 1998 or the 1st of May, 1998.
+
+g) 21-5-1998. Comment on why you know you are correct.
+
+```{r}
+dmy('21 5, 1998')
+```
+
+I know I am correct because their is no 21st month, so it has to be the 21st of May, 1998.
+
+h) 2020-May-5 10:30 am
+
+```{r}
+ymd_hm('2020 May 5 10:30 AM')
+``` 
+
+Defaults to UTC time zone.
+
+i) 2020-May-5 10:30 am PDT (ex Seattle)
+
+```{r}
+ymd_hm('2020 May 5 10:30 AM', tz='US/Pacific')
+```
+
+j) 2020-May-5 10:30 am AST (ex Puerto Rico)
+
+```{r}
+ymd_hm('2020 May 5 10:30 AM', tz='America/Puerto_Rico')
+```
+
+Converted all to date/time objects, and commented on the ones that failed to parse.
+
+## Exercise 3
+
+Suppose you have arranged for a phone call to be at 3 pm on May 8, 2025 at Arizona time. However, the recipient will be in Auckland, NZ. What time will it be there?
+
+```{r}
+phone.call <- mdy_hm('May 8, 2025 3:00 PM', tz='US/Arizona')
+with_tz(phone.call, tz='Pacific/Auckland')
+```
+It will be May 9th, 2025 at 10:00 AM in Auckland, NZ.
+
+## Exercise 4
+
+From this book’s GitHub directory, navigate to the data-raw directory and then download the Pulliam_Airport_Weather_Station.csv data file. (There are several weather station files. Make sure you get the correct one!) There is a DATE column (is it of type date when you import the data?) as well as the Maximum and Minimum temperature. For the last 5 years of data included in the file, plot the time series of daily maximum temperature with date on the x-axis. Write your code so that it will work if I update the date set. Hint: Find the maximum date in the data set and then subtract 5 years. Will there be a difference if you use dyears(5) vs years(5)? Which seems more appropriate here?
+
+```{r}
+pulliam.weather <- read.csv('data-raw/Pulliam_Airport_Weather_Station.csv')
+```
+
+```{r}
+pulliam.weather <- mutate(pulliam.weather, dates = mdy(DATE))
+max.date <- max(pulliam.weather$dates)
+end.date <- ymd(max.date)
+start.date <- (end.date - years(5))
+date.range <- filter(pulliam.weather, dates>=start.date)
+date.range <- mutate(date.range, Dates = ymd(dates))
+```
+
+```{r}
+ggplot(date.range)+
+  geom_line( aes(x = Dates, y = TMAX))+
+  labs(title = 'Daily Max Temperature at Pulliam Airport', x = 'Date', y = 'Max Temperature')
+```
+
+Read the csv file, converted date characters to date/time objects, created objects for the maximum date in the data set then found the date 5 years prior, used the start date to filter all the observations from the previous 5 years. Created a graph of the past 5 years of observations.
+
+## Exercise 5
+
+It turns out there is some interesting periodicity regarding the number of births on particular days of the year.
+
+a) Using the mosaicData package, load the data set Births78 which records the number of children born on each day in the United States in 1978. Because this problem is intended to show how to calculate the information using the date, remove all the columns except date and births.
+
+```{r}
+library(mosaicData)
+```
+
+```{r}
+data("Births78")
+birth.data <- select(Births78, date, births)
+head(birth.data)
+```
+
+Selected only the date and birth columns from the date set.
+
+b) Graph the number of births vs the date with date on the x-axis. What stands out to you? Why do you think we have this trend?
+
+```{r}
+ggplot(birth.data)+
+  geom_point( aes(x = date, y = births)) +
+  labs(title = 'Births vs. Date', x = 'Date', y = 'Births')
+```
+
+Created a graph comparing the date of birth to the number of births.
+
+c) To test your assumption, we need to figure out the what day of the week each observation is. Use dplyr::mutate to add a new column named dow that is the day of the week (Monday, Tuesday, etc). This calculation will involve some function in the lubridate package and the date column.
+
+```{r}
+birth.data <- mutate(birth.data, dow = wday(ymd(date), label=TRUE, abbr=FALSE))
+```
+
+d) Plot the data with the point color being determined by the day of the week variable.
+
+```{r}
+ggplot(birth.data)+
+  geom_point( aes(x = date, y = births, color = dow)) +
+  labs(title = 'Births vs. Date', x = 'Date', y = 'Births')
+```
+
+Updated the graph to show which day of the week each date was.
+
+## Challenge Problem
+
+A small airline records each flight’s departure and arrival as local clock times, along with the time zone of each airport.
+
+
+```{r}
+flights <- tibble(
+  flight    = c("F1", "F2", "F3"),
+  depart    = c("2025-05-08 08:15", "2025-06-12 09:00", "2025-09-20 17:45"),
+  depart_tz = c("US/Arizona", "America/Los_Angeles", "America/Denver"),
+  arrive    = c("2025-05-08 15:05", "2025-06-12 11:40", "2025-09-21 10:50"),
+  arrive_tz = c("America/New_York", "Pacific/Honolulu", "Europe/London")
+)
+```
+
+Convert depart and arrive to date-time objects, each in its own time zone. Hint: lubridate accepts only one tz value at a time.
+
+```{r}
+flights.dt <- flights %>%
+  rowwise() %>%
+  mutate( Departure = ymd_hm(depart, tz=depart_tz)) %>%
+  mutate( Arrival = ymd_hm(arrive, tz=arrive_tz))
+
+flights.dt <- select(flights.dt, flight, Departure, Arrival)
+flights.dt
+```
+
+Created the date/time objects for the departure and arrival using the rowwise() command. The time zones are incorrect, do not know why they are all EDT instead of the time zone assigned.
