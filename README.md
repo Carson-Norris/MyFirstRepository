@@ -1,2 +1,3 @@
 # MyFirstRepository
-STA445 - Chapter 16 Exercises
+## Carson Norris
+### STA445 Chapter 16 Exercises
